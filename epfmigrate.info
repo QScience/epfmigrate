@@ -1,0 +1,10 @@
+name = "Migrate from EPF"
+description = "Module to migrate EPF old site content to Drupal 7"
+package = "Development"
+core = 7.x
+
+dependencies[] = migrate
+
+#  include the files that contain your Migrate classes 
+files[] = epfmigrate.module
+files[] = epfmigrate.inc

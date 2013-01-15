@@ -15,19 +15,19 @@ $databases['for_migration']['default'] = array(
 4. empty the contents and users of the destination table(only keep the article nodes).And set user's position field:PostDoc->Postdoc
 5. enable the data migration module.
 6. Before import papers, commend line 113 in arxiv.module : $node->title=$item['title'];
-7. delete the 'guest' user
-8. import "epfuser,book,,editorial,event,news,papersArxiv,commentbook,commenteditorial,commentnews,commentpapersArxiv"
-9. comment 111 has chinese characters, just insert it by hand
-10. after import papers, copy the paper files to new place. //
-11. import vote and view\download information
-    a. empty arxiv_downNo,accesslog,qtr_reputation,qtr_actions,votingapi_vote,similarity tables
-    b the undefined paper will be set with id=1. if the node id=1 exit, change this number.
+7. import "epfuser,book,,editorial,event,news,papersArxiv,commentbook,commenteditorial,commentnews,commentpapersArxiv"
+8. comment 111 has chinese characters, just insert it by hand
+9. after import papers, copy the paper files to new place. //
+10. import vote and view\download information
+    a. empty arxiv_downNo,accesslog,qtr_reputation,qtr_actions,qtr_quality,votingapi_vote,similarity tables
+    b. the undefined paper will be set with id=1. if the node id=1 exit, change this number.
     c. import actions and votes migration
     d. delete from voteapi_vote table where entity_id=1(or others as set).
-12. delete the guest user
+11. delete the guest user
 12. update node_counter table by sql:
 update `drupalcopy`.`node_counter` as nc inner join `drupalcopy`.`migrate_map_editorial` as me on me.destid1=nc.nid set totalcount=(select reviewNum from `epf-migrate`.`editorials` as v inner join `drupalcopy`.`migrate_map_editorial` as e on e.sourceid1=v.id where e.destid1=nc.nid);
 update `drupalcopy`.`node_counter` as nc inner join `drupalcopy`.`migrate_map_book` as me on me.destid1=nc.nid set totalcount=(select reviewNum from `epf-migrate`.`books` as v inner join `drupalcopy`.`migrate_map_book` as e on e.sourceid1=v.id where e.destid1=nc.nid);
 update `drupalcopy`.`node_counter` as nc inner join `drupalcopy`.`migrate_map_event` as me on me.destid1=nc.nid set totalcount=(select reviewNum from `epf-migrate`.`events` as v inner join `drupalcopy`.`migrate_map_event` as e on e.sourceid1=v.id where e.destid1=nc.nid);
 update `drupalcopy`.`node_counter` as nc inner join `drupalcopy`.`migrate_map_news` as me on me.destid1=nc.nid set totalcount=(select reviewNum from `epf-migrate`.`news` as v inner join `drupalcopy`.`migrate_map_news` as e on e.sourceid1=v.id where e.destid1=nc.nid);
+update `drupalcopy`.`node_counter` as nc inner join `drupalcopy`.`migrate_map_jobs` as me on me.destid1=nc.nid set totalcount=(select reviewNum from `epf-migrate`.`news` as v inner join `drupalcopy`.`migrate_map_jobs` as e on e.sourceid1=v.id where e.destid1=nc.nid);
 update `drupalcopy`.`node_counter` as nc inner join `drupalcopy`.`migrate_map_papersarxiv` as me on me.destid1=nc.nid set totalcount=(select reviewNum from `epf-migrate`.`papers` as v inner join `drupalcopy`.`migrate_map_papersarxiv` as e on e.sourceid1=v.id where e.destid1=nc.nid);

@@ -212,6 +212,55 @@ class newsMigration extends Migration {
   }
   public function prepareRow($row) {
   // If marked as removed in the related data, skip this row
+  if ($row->removed==1||$row->prefix==='Job Opening') {
+    return FALSE;
+  }
+  if($row->isLink){
+  	$row->link=$row->content;
+  	$row->body=$row->abstract;
+  }else{
+  	$row->link='';
+  	$row->body=$row->content;
+  }
+  }
+}
+class jobsMigration extends Migration {
+  public function __construct() {
+    parent::__construct();
+    $this->dependencies = array('epfuser');
+    $this->map = new MigrateSQLMap($this->machineName,
+        array('id' => array(
+                'type' => 'int',
+                'unsigned' => TRUE,
+                 'not null' => TRUE,
+                'description' => 'jobs id.'
+                )
+             ),
+        MigrateDestinationNode::getKeySchema()
+    );
+    // The example uses a SQL database as source.
+     $query = Database::getConnection('default', 'for_migration')
+           ->select('news', 'b')
+             ->fields('b', array('id','prefix','title','abstract','content','isLink','reviewNum','voteNum','postUser','updateTime','verified','removed'))
+             ->condition('prefix','Job Opening');
+    $this->source = new MigrateSourceSQL($query);
+    // We migrate into "page" nodes.
+    $node_options = MigrateDestinationNode::options(LANGUAGE_NONE, 'full_html');
+    $this->destination = new MigrateDestinationNode('job_opening',$node_options);
+
+
+    // Finally we add simple field mappings 
+    $this->addFieldMapping('title', 'title');
+    $this->addFieldMapping('body', 'body');
+    $this->addFieldMapping('website', 'link');
+    $this->addFieldMapping('uid', 'postUser')
+         ->sourceMigration('epfuser')
+         ->defaultValue(0);
+    $this->addFieldMapping('created', 'updateTime');
+    $this->addFieldMapping('status','verified');
+  }
+  public function prepareRow($row) {
+  // If marked as removed in the related data, skip this row
   if ($row->removed==1) {
     return FALSE;
   }
@@ -419,6 +468,57 @@ class commentnewsMigration extends Migration {
 
     // Finally we add simple field mappings 
     $this->addFieldMapping('nid', 'reId')->sourceMigration('news');
+    $this->addFieldMapping('subject', 'subject');
+    $this->addFieldMapping('comment_body', 'content');
+    $this->addFieldMapping('uid', 'postUser')
+         ->sourceMigration('epfuser')
+         ->defaultValue(0);
+    $this->addFieldMapping('name', 'postUserName');
+    $this->addFieldMapping('mail', 'postUserEmail');
+    $this->addFieldMapping('created', 'postTime');
+    $this->addFieldMapping('status')->defaultValue(1);
+  }
+  public function prepareRow($row) {
+  // If marked as removed in the related data, skip this row
+  if ($row->removed==1||$row->category!="News") {
+    return FALSE;
+  }
+  $row->subject=substr($row->content,0,60);
+   if($row->postUser!='guest'){
+  $row->postUserName=$row->postUser;
+  	$row->postUserEmail=$row->email;
+  }
+  }
+}
+class commentjobsMigration extends Migration {
+  public function __construct() {
+    parent::__construct();
+    $this->dependencies = array('epfuser','jobs');
+  	$this->map = new MigrateSQLMap($this->machineName,
+        array('id' => array(
+                'type' => 'int',
+                'unsigned' => TRUE,
+                 'not null' => TRUE,
+                'description' => 'comment id.',
+                'alias' => 'b',
+                )
+             ),
+        MigrateDestinationComment::getKeySchema()
+    );
+    // The example uses a SQL database as source.
+     $query = Database::getConnection('default', 'for_migration')
+           ->select('comments', 'b')
+             ->fields('b', array('id','reId','category','content','postUser','postUserName','postUserEmail','postTime','removed'));
+     $query ->leftJoin('users', 'ub', 'b.postUser = ub.id');
+     $query->fields('ub',array('email'));
+    $this->source = new MigrateSourceSQL($query);
+    // We migrate into comments.
+    $node_options = MigrateDestinationNode::options(LANGUAGE_NONE, 'full_html');
+    $this->destination = new MigrateDestinationComment('comment_node_job_opening',$node_options);
+
+
+    // Finally we add simple field mappings 
+    $this->addFieldMapping('nid', 'reId')->sourceMigration('jobs');
     $this->addFieldMapping('subject', 'subject');
     $this->addFieldMapping('comment_body', 'content');
     $this->addFieldMapping('uid', 'postUser')
@@ -848,7 +948,48 @@ class actionsnewsMigration extends Migration {
 $row->voteTime = Migration::timestamp($row->voteTime);
   }
 }
+class actionsjobsMigration extends Migration {
+  public function __construct() {
+    parent::__construct();
+    $this->dependencies = array('epfuser','jobs');
+      $query =  Database::getConnection('default', 'for_migration')
+             ->select('votes', 'p')
+             ->fields('p', array('id','voteId','category','score','voteUser','voteTime','ip'))
+             ->condition('voteUser','guest','!=')->condition('category','News');
+    $this->source = new MigrateSourceSQL($query);
+    // We migrate into "page" nodes.
+    $this->destination = new MigrateDestinationTable('qtr_actions');
 
+    // We instantiate the MigrateMap
+    $this->map = new MigrateSQLMap($this->machineName,
+        array(
+          'id' => array('type' => 'int',
+                          'unsigned' => TRUE,
+                          'not null' => TRUE,
+                         )
+        ),
+        MigrateDestinationNode::getKeySchema()
+      );
+
+    // Finally we add simple field mappings 
+    $this->addFieldMapping('nid', 'voteId')->sourceMigration('jobs')->defaultValue(1);
+    $this->addFieldMapping('action_type','typescore');
+    $this->addFieldMapping('uid', 'voteUser')->sourceMigration('epfuser')
+         ->defaultValue(0);
+    $this->addFieldMapping('timestamp', 'voteTime');
+  }
+  public function prepareRow($row) {
+  // If marked as removed in the related data, skip this row
+  if($row->score==1){
+  	$row->typescore=3;
+  }else if($row->score==3){
+  	$row->typescore=2;
+  }else if($row->score==10){
+  	$row->typescore=1;
+  }
+$row->voteTime = Migration::timestamp($row->voteTime);
+  }
+}
 class ArxivMigrateFieldHandler extends MigrateFieldHandler {
 
   /**

@@ -246,7 +246,7 @@ class jobsMigration extends Migration {
     $this->source = new MigrateSourceSQL($query);
     // We migrate into "page" nodes.
     $node_options = MigrateDestinationNode::options(LANGUAGE_NONE, 'full_html');
-    $this->destination = new MigrateDestinationNode('job_opening',$node_options);
+    $this->destination = new MigrateDestinationNode('jobs_opening',$node_options);
 
 
     // Finally we add simple field mappings 
@@ -514,7 +514,7 @@ class commentjobsMigration extends Migration {
     $this->source = new MigrateSourceSQL($query);
     // We migrate into comments.
     $node_options = MigrateDestinationNode::options(LANGUAGE_NONE, 'full_html');
-    $this->destination = new MigrateDestinationComment('comment_node_job_opening',$node_options);
+    $this->destination = new MigrateDestinationComment('comment_node_jobs_opening',$node_options);
 
 
     // Finally we add simple field mappings 

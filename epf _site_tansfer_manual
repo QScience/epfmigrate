@@ -1,0 +1,6 @@
+1. get the current data file from university side.
+2.use this method to change the data format.
+3. when the data changed to current required data, we replace our current testing site database with new transfered data.
+4. set the testing site, go to configuration menu, and unset of the clean URLs. then move the data base to unifr server mysql database.
+5. change the setting file and then move all the files in testing server to unifr sever. the directory should be the first category. it will be done in a minutes
+6. everything will be fine after those steps.
